@@ -455,6 +455,9 @@
             searchClient,
         });
 
+        // Store all hits for modal functionality
+        let allHits = [];
+
         // Modal functionality
         const modal = document.getElementById('educatorModal');
         const closeBtn = document.querySelector('.modal-close');
@@ -469,8 +472,17 @@
             }
         });
 
+        // Event delegation for card clicks
+        document.addEventListener('click', (e) => {
+            const card = e.target.closest('.educator-card');
+            if (card && card.dataset.hitIndex !== undefined) {
+                const hitIndex = parseInt(card.dataset.hitIndex);
+                openModal(allHits[hitIndex]);
+            }
+        });
+
         function openModal(hit) {
-            const image = hit.profile_photo || hit.Thumbnail || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"%3E%3Crect fill="%23e0e0e0" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="16" fill="%23999"%3ENo Image%3C/text%3E%3C/svg%3E';
+            const image = hit.profile_photo || hit.Thumbnail || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"%3E%3Crect fill="%23e0e0e0" width="200" height="200"/%3E%3C/svg%3E';
             
             document.getElementById('modalImage').src = image;
             document.getElementById('modalImage').onerror = function() {
@@ -494,9 +506,6 @@
             let metaHTML = '';
             if (hit.grades) {
                 metaHTML += `<div class="meta-item"><div class="meta-label">Grades</div><div class="meta-value">${hit.grades}</div></div>`;
-            }
-            if (hit.experience) {
-                metaHTML += `<div class="meta-item"><div class="meta-label">Experience</div><div class="meta-value">${hit.experience}</div></div>`;
             }
             if (hit.rates) {
                 metaHTML += `<div class="meta-item"><div class="meta-label">Rates</div><div class="meta-value">${hit.rates}</div></div>`;
@@ -541,14 +550,18 @@
             instantsearch.widgets.hits({
                 container: '#hits',
                 templates: {
-                    item(hit) {
+                    item(hit, { html, components }) {
+                        // Store hit in the global array
+                        const hitIndex = allHits.length;
+                        allHits.push(hit);
+
                         const subjects = [
                             hit.primary_subjects,
                             hit.other_subjects,
                             hit.subjects
                         ].filter(Boolean).join(', ');
 
-                        const image = hit.profile_photo || hit.Thumbnail || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"%3E%3Crect fill="%23e0e0e0" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="16" fill="%23999"%3ENo Image%3C/text%3E%3C/svg%3E';
+                        const image = hit.profile_photo || hit.Thumbnail || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"%3E%3Crect fill="%23e0e0e0" width="200" height="200"/%3E%3C/svg%3E';
                         
                         // Handle summary - extract from JSON object if needed
                         let summary = hit.summary || '';
@@ -560,7 +573,7 @@
                         }
 
                         return `
-                            <div class="educator-card" onclick="openModal(${JSON.stringify(hit).replace(/"/g, '&quot;')})">
+                            <div class="educator-card" data-hit-index="${hitIndex}">
                                 <img src="${image}" alt="${hit.Name}" class="educator-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Crect fill=%22%23e0e0e0%22 width=%22200%22 height=%22200%22/%3E%3C/svg%3E'">
                                 <div class="educator-info">
                                     <div class="educator-name">${hit.Name}</div>
@@ -568,7 +581,6 @@
                                     ${summary ? `<div class="educator-summary">${summary}</div>` : ''}
                                     <div class="educator-meta">
                                         ${hit.grades ? `<span><strong>Grades:</strong> ${hit.grades}</span>` : ''}
-                                        ${hit.experience ? `<span><strong>Experience:</strong> ${hit.experience}</span>` : ''}
                                         ${hit.rates ? `<span><strong>Rates:</strong> ${hit.rates}</span>` : ''}
                                     </div>
                                 </div>
@@ -586,6 +598,11 @@
                 },
             }),
         ]);
+
+        // Reset hits array when search is performed
+        search.on('results', () => {
+            allHits = [];
+        });
 
         search.start();
     </script>
