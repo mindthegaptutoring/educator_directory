@@ -409,7 +409,7 @@
 </head>
 <body>
     <div class="container">
-        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: #999; font-family: monospace;">v1.3</div>
+        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: #999; font-family: monospace;">v1.4</div>
         <div class="header">
             <h1>Find Your Educator</h1>
             <p>Search our directory of experienced tutors and educators</p>
@@ -491,7 +491,7 @@
                 this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"%3E%3Crect fill="%23e0e0e0" width="200" height="200"/%3E%3C/svg%3E';
             };
 
-            document.getElementById('modalName').textContent = hit.Name;
+            document.getElementById('modalName').textContent = hit.name;
 
             // Subjects
             const subjects = [hit.primary_subjects, hit.other_subjects, hit.subjects]
@@ -594,9 +594,9 @@
 
                         return `
                             <div class="educator-card" data-hit-index="${hitIndex}">
-                                <img src="${image}" alt="${hit.Name}" class="educator-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Crect fill=%22%23e0e0e0%22 width=%22200%22 height=%22200%22/%3E%3C/svg%3E'">
+                                <img src="${image}" alt="${hit.name}" class="educator-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Crect fill=%22%23e0e0e0%22 width=%22200%22 height=%22200%22/%3E%3C/svg%3E'">
                                 <div class="educator-info">
-                                    <div class="educator-name">${hit.Name}</div>
+                                    <div class="educator-name">${hit.name}</div>
                                     ${subjects ? `<div class="educator-subjects">${subjects.split(', ').map(s => `<span class="subject-tag">${s.trim()}</span>`).join('')}</div>` : ''}
                                     ${summary ? `<div class="educator-summary">${summary}</div>` : ''}
                                     <div class="educator-meta">
