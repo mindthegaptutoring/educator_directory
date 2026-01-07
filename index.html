@@ -104,6 +104,7 @@
             display: flex;
             flex-direction: column;
             height: 100%;
+            cursor: pointer;
         }
 
         .educator-image {
@@ -205,6 +206,179 @@
             color: #333;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            font-size: 28px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .modal-name {
+            font-size: 2em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .modal-subjects {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .modal-subject-tag {
+            background: #f0f4ff;
+            color: #667eea;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-section-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .modal-section-content {
+            font-size: 0.95em;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .modal-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .meta-item {
+            text-align: center;
+        }
+
+        .meta-label {
+            font-size: 0.85em;
+            color: #999;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .meta-value {
+            font-size: 0.95em;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .modal-contact {
+            border-top: 1px solid #e0e0e0;
+            padding-top: 20px;
+        }
+
+        .modal-contact-btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        .modal-contact-btn:hover {
+            background: #764ba2;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 1.8em;
@@ -216,6 +390,18 @@
 
             .search-container, .results-container {
                 padding: 20px;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+
+            .modal-name {
+                font-size: 1.5em;
+            }
+
+            .modal-image {
+                height: 200px;
             }
         }
     </style>
@@ -238,6 +424,25 @@
         </div>
     </div>
 
+    <!-- Modal for educator details -->
+    <div id="educatorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div></div>
+                <button class="modal-close">&times;</button>
+            </div>
+            <img id="modalImage" class="modal-image" alt="">
+            <div class="modal-name" id="modalName"></div>
+            <div class="modal-subjects" id="modalSubjects"></div>
+            <div class="modal-meta" id="modalMeta"></div>
+            <div class="modal-section" id="summarySection" style="display:none;">
+                <div class="modal-section-title">About</div>
+                <div class="modal-section-content" id="modalSummary"></div>
+            </div>
+            <div class="modal-contact" id="modalContact"></div>
+        </div>
+    </div>
+
     <!-- Algolia InstantSearch Library -->
     <script src="https://cdn.jsdelivr.net/npm/algoliasearch@4.20.0/dist/algoliasearch-lite.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/instantsearch.js@4.56.5/dist/instantsearch.production.min.js"></script>
@@ -249,6 +454,78 @@
             indexName: 'educators_directory',
             searchClient,
         });
+
+        // Modal functionality
+        const modal = document.getElementById('educatorModal');
+        const closeBtn = document.querySelector('.modal-close');
+
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+
+        function openModal(hit) {
+            const image = hit.profile_photo || hit.Thumbnail || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"%3E%3Crect fill="%23e0e0e0" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="16" fill="%23999"%3ENo Image%3C/text%3E%3C/svg%3E';
+            
+            document.getElementById('modalImage').src = image;
+            document.getElementById('modalImage').onerror = function() {
+                this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"%3E%3Crect fill="%23e0e0e0" width="200" height="200"/%3E%3C/svg%3E';
+            };
+
+            document.getElementById('modalName').textContent = hit.Name;
+
+            // Subjects
+            const subjects = [hit.primary_subjects, hit.other_subjects, hit.subjects]
+                .filter(Boolean)
+                .join(', ')
+                .split(',')
+                .map(s => s.trim());
+            
+            const subjectsDiv = document.getElementById('modalSubjects');
+            subjectsDiv.innerHTML = subjects.map(s => `<div class="modal-subject-tag">${s}</div>`).join('');
+
+            // Meta information
+            const metaDiv = document.getElementById('modalMeta');
+            let metaHTML = '';
+            if (hit.grades) {
+                metaHTML += `<div class="meta-item"><div class="meta-label">Grades</div><div class="meta-value">${hit.grades}</div></div>`;
+            }
+            if (hit.experience) {
+                metaHTML += `<div class="meta-item"><div class="meta-label">Experience</div><div class="meta-value">${hit.experience}</div></div>`;
+            }
+            if (hit.rates) {
+                metaHTML += `<div class="meta-item"><div class="meta-label">Rates</div><div class="meta-value">${hit.rates}</div></div>`;
+            }
+            metaDiv.innerHTML = metaHTML || '<div style="grid-column: 1/-1; text-align: center; color: #999;">No additional information</div>';
+
+            // Summary
+            const summarySection = document.getElementById('summarySection');
+            let summaryText = hit.summary || '';
+            if (typeof summaryText === 'object' && summaryText.value) {
+                summaryText = summaryText.value;
+            }
+            if (summaryText) {
+                document.getElementById('modalSummary').textContent = summaryText;
+                summarySection.style.display = 'block';
+            } else {
+                summarySection.style.display = 'none';
+            }
+
+            // Contact
+            const contactDiv = document.getElementById('modalContact');
+            if (hit.email) {
+                contactDiv.innerHTML = `<a href="mailto:${hit.email}" class="modal-contact-btn">Contact Educator</a>`;
+            } else {
+                contactDiv.innerHTML = '';
+            }
+
+            modal.classList.add('active');
+        }
 
         search.addWidgets([
             instantsearch.widgets.searchBox({
@@ -272,20 +549,28 @@
                         ].filter(Boolean).join(', ');
 
                         const image = hit.profile_photo || hit.Thumbnail || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"%3E%3Crect fill="%23e0e0e0" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="16" fill="%23999"%3ENo Image%3C/text%3E%3C/svg%3E';
+                        
+                        // Handle summary - extract from JSON object if needed
+                        let summary = hit.summary || '';
+                        if (typeof summary === 'object' && summary.value) {
+                            summary = summary.value;
+                        }
+                        if (summary.length > 150) {
+                            summary = summary.substring(0, 150) + '...';
+                        }
 
                         return `
-                            <div class="educator-card">
+                            <div class="educator-card" onclick="openModal(${JSON.stringify(hit).replace(/"/g, '&quot;')})">
                                 <img src="${image}" alt="${hit.Name}" class="educator-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Crect fill=%22%23e0e0e0%22 width=%22200%22 height=%22200%22/%3E%3C/svg%3E'">
                                 <div class="educator-info">
                                     <div class="educator-name">${hit.Name}</div>
                                     ${subjects ? `<div class="educator-subjects">${subjects.split(', ').map(s => `<span class="subject-tag">${s.trim()}</span>`).join('')}</div>` : ''}
-                                    ${hit.summary ? `<div class="educator-summary">${hit.summary}</div>` : ''}
+                                    ${summary ? `<div class="educator-summary">${summary}</div>` : ''}
                                     <div class="educator-meta">
                                         ${hit.grades ? `<span><strong>Grades:</strong> ${hit.grades}</span>` : ''}
                                         ${hit.experience ? `<span><strong>Experience:</strong> ${hit.experience}</span>` : ''}
                                         ${hit.rates ? `<span><strong>Rates:</strong> ${hit.rates}</span>` : ''}
                                     </div>
-                                    ${hit.email ? `<div class="educator-contact"><a href="mailto:${hit.email}" class="contact-link">Contact</a></div>` : ''}
                                 </div>
                             </div>
                         `;
