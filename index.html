@@ -409,7 +409,7 @@
 </head>
 <body>
     <div class="container">
-        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: #999; font-family: monospace;">v1.2</div>
+        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: #999; font-family: monospace;">v1.3</div>
         <div class="header">
             <h1>Find Your Educator</h1>
             <p>Search our directory of experienced tutors and educators</p>
@@ -484,7 +484,7 @@
         });
 
         function openModal(hit) {
-            const image = hit.profile_photo || hit.Thumbnail || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"%3E%3Crect fill="%23e0e0e0" width="200" height="200"/%3E%3C/svg%3E';
+            const image = hit.thumbnail_url || hit.profile_photo_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"%3E%3Crect fill="%23e0e0e0" width="200" height="200"/%3E%3C/svg%3E';
             
             document.getElementById('modalImage').src = image;
             document.getElementById('modalImage').onerror = function() {
@@ -572,7 +572,7 @@
                             hit.subjects
                         ].filter(Boolean).join(', ');
 
-                        const image = hit.profile_photo || hit.Thumbnail || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"%3E%3Crect fill="%23e0e0e0" width="200" height="200"/%3E%3C/svg%3E';
+                        const image = hit.thumbnail_url || hit.profile_photo_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"%3E%3Crect fill="%23e0e0e0" width="200" height="200"/%3E%3C/svg%3E';
                         
                         // Handle summary - extract from JSON object or stringified JSON
                         let summary = hit.summary || '';
