@@ -503,7 +503,7 @@
 </head>
 <body>
     <div class="container">
-        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: #999; font-family: monospace;">v1.6</div>
+        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: #999; font-family: monospace;">v1.7</div>
         <div class="header">
             <h1>Find Your Educator</h1>
             <p>Search our directory of experienced tutors and educators</p>
@@ -595,24 +595,11 @@
             }
         });
 
-        // Filter functionality
+        // Filter functionality - client-side filtering in hits template
         function applyFilters() {
-            let query = document.querySelector('.ais-SearchBox-input').value;
-            let filterQueries = [];
-
-            if (activeFilters.grades.length > 0) {
-                let gradeFilter = activeFilters.grades.map(g => `grades:"${g}"`).join(' OR ');
-                filterQueries.push(`(${gradeFilter})`);
-            }
-
-            if (activeFilters.subjects.length > 0) {
-                let subjectFilter = activeFilters.subjects.map(s => `primary_subjects:"${s}" OR other_subjects:"${s}"`).join(' OR ');
-                filterQueries.push(`(${subjectFilter})`);
-            }
-
-            const fullQuery = [query, ...filterQueries].filter(Boolean).join(' ');
-            document.querySelector('.ais-SearchBox-input').value = fullQuery;
-            search.helper.setQuery(fullQuery).search();
+            // Force a re-render by doing a dummy search
+            const currentQuery = document.querySelector('.ais-SearchBox-input').value;
+            search.helper.setQuery(currentQuery).search();
         }
 
         // Add filter button listeners
@@ -734,6 +721,19 @@
                 container: '#hits',
                 templates: {
                     item(hit, { html, components }) {
+                        // Client-side filter check
+                        if (activeFilters.grades.length > 0) {
+                            const hitGrades = hit.grades || '';
+                            const matchesGrade = activeFilters.grades.some(grade => hitGrades.includes(grade));
+                            if (!matchesGrade) return '';
+                        }
+
+                        if (activeFilters.subjects.length > 0) {
+                            const hitSubjects = (hit.primary_subjects || '') + ' ' + (hit.other_subjects || '');
+                            const matchesSubject = activeFilters.subjects.some(subject => hitSubjects.includes(subject));
+                            if (!matchesSubject) return '';
+                        }
+
                         // Store hit in the global array
                         const hitIndex = allHits.length;
                         allHits.push(hit);
