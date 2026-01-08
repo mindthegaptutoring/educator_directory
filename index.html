@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Educators Directory - v3.5 -->
+    <!-- Educators Directory - v3.6 -->
     <!-- Fuzzy search with Algolia, filtering by subject/grade, responsive design -->
     <!-- Subject and grade filters auto-populate from Algolia data, no manual updates needed -->
+    <!-- v3.6: Fixed profile photo positioning at thumbnail border using absolute positioning within image wrapper -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Educators Directory - Find Your Tutor</title>
@@ -200,7 +201,7 @@
             border-radius: 50%;
             border: 3px solid white;
             object-fit: cover;
-            top: 130px;
+            bottom: -20px;
             right: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             z-index: 10;
@@ -217,7 +218,6 @@
         .educator-image {
             width: 100%;
             aspect-ratio: 2 / 1;
-            height: 150px;
             object-fit: cover;
             background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%);
             display: block;
@@ -850,8 +850,8 @@
 
                         return `
                             <div class="educator-card ${shouldHide ? 'hidden' : ''}" data-hit-index="${hitIndex}">
-                                <img src="${hit.profile_photo_url || hit.thumbnail_url || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Crect fill=%22%23e0e0e0%22 width=%22200%22 height=%22200%22/%3E%3C/svg%3E'}" class="educator-card-photo-overlay" alt="${hit.name}">
                                 <div style="position: relative;">
+                                    <img src="${hit.profile_photo_url || hit.thumbnail_url || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Crect fill=%22%23e0e0e0%22 width=%22200%22 height=%22200%22/%3E%3C/svg%3E'}" class="educator-card-photo-overlay" alt="${hit.name}">
                                     <img src="${image}" alt="${hit.name}" class="educator-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Crect fill=%22%23e0e0e0%22 width=%22200%22 height=%22200%22/%3E%3C/svg%3E'">
                                     ${hit.grades ? `<div class="grade-badge">Grades: ${hit.grades}</div>` : ''}
                                 </div>
