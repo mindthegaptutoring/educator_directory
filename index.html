@@ -186,6 +186,10 @@
             position: relative;
         }
 
+        .educator-card.hidden {
+            display: none;
+        }
+
         .educator-image {
             width: 100%;
             height: 200px;
@@ -206,6 +210,25 @@
             font-size: 0.85em;
             font-weight: 600;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .thumbnail-subjects {
+            padding: 10px 15px;
+            background: #f9f9f9;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .thumbnail-subject-tag {
+            background: white;
+            border: 1px solid #0066cc;
+            color: #0066cc;
+            padding: 4px 9px;
+            border-radius: 16px;
+            font-size: 0.8em;
+            font-weight: 500;
         }
 
         .educator-info {
@@ -503,7 +526,7 @@
 </head>
 <body>
     <div class="container">
-        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: #999; font-family: monospace;">v1.7</div>
+        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: #999; font-family: monospace;">v1.8</div>
         <div class="header">
             <h1>Find Your Educator</h1>
             <p>Search our directory of experienced tutors and educators</p>
@@ -572,6 +595,7 @@
             grades: [],
             subjects: []
         };
+        let allUniqueSubjects = new Set();
 
         const search = instantsearch({
             indexName: 'educators_directory',
@@ -721,22 +745,13 @@
                 container: '#hits',
                 templates: {
                     item(hit, { html, components }) {
-                        // Client-side filter check
-                        if (activeFilters.grades.length > 0) {
-                            const hitGrades = hit.grades || '';
-                            const matchesGrade = activeFilters.grades.some(grade => hitGrades.includes(grade));
-                            if (!matchesGrade) return '';
-                        }
-
-                        if (activeFilters.subjects.length > 0) {
-                            const hitSubjects = (hit.primary_subjects || '') + ' ' + (hit.other_subjects || '');
-                            const matchesSubject = activeFilters.subjects.some(subject => hitSubjects.includes(subject));
-                            if (!matchesSubject) return '';
-                        }
-
                         // Store hit in the global array
                         const hitIndex = allHits.length;
                         allHits.push(hit);
+
+                        // Collect all subjects
+                        if (hit.primary_subjects) allUniqueSubjects.add(hit.primary_subjects);
+                        if (hit.other_subjects) allUniqueSubjects.add(hit.other_subjects);
 
                         const subjects = [
                             hit.primary_subjects,
@@ -764,12 +779,29 @@
                             summary = summary.substring(0, 150) + '...';
                         }
 
+                        // Determine if card should be hidden based on filters
+                        let shouldHide = false;
+                        if (activeFilters.grades.length > 0) {
+                            const hitGrades = hit.grades || '';
+                            const matchesGrade = activeFilters.grades.some(grade => hitGrades.includes(grade));
+                            if (!matchesGrade) shouldHide = true;
+                        }
+
+                        if (activeFilters.subjects.length > 0) {
+                            const hitSubjects = (hit.primary_subjects || '') + ' ' + (hit.other_subjects || '');
+                            const matchesSubject = activeFilters.subjects.some(subject => hitSubjects.includes(subject));
+                            if (!matchesSubject) shouldHide = true;
+                        }
+
+                        const subjectList = [hit.primary_subjects, hit.other_subjects].filter(Boolean);
+
                         return `
-                            <div class="educator-card" data-hit-index="${hitIndex}">
+                            <div class="educator-card ${shouldHide ? 'hidden' : ''}" data-hit-index="${hitIndex}">
                                 <div style="position: relative;">
                                     <img src="${image}" alt="${hit.name}" class="educator-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Crect fill=%22%23e0e0e0%22 width=%22200%22 height=%22200%22/%3E%3C/svg%3E'">
                                     ${hit.grades ? `<div class="grade-badge">Grades: ${hit.grades}</div>` : ''}
                                 </div>
+                                ${subjectList.length > 0 ? `<div class="thumbnail-subjects">${subjectList.map(s => `<span class="thumbnail-subject-tag">${s}</span>`).join('')}</div>` : ''}
                                 <div class="educator-info">
                                     <div class="educator-name">${hit.name}</div>
                                     ${subjects ? `<div class="educator-subjects">${subjects.split(', ').map(s => `<span class="subject-tag">${s.trim()}</span>`).join('')}</div>` : ''}
@@ -793,24 +825,13 @@
             }),
         ]);
 
-        // Reset hits array when search is performed
+        // Reset hits array and populate subject filters when search is performed
         search.on('results', () => {
             allHits = [];
             
-            // Generate unique subjects for filter buttons
-            const uniqueSubjects = new Set();
-            search.results.hits.forEach(hit => {
-                if (hit.primary_subjects) {
-                    uniqueSubjects.add(hit.primary_subjects);
-                }
-                if (hit.other_subjects) {
-                    uniqueSubjects.add(hit.other_subjects);
-                }
-            });
-
-            // Render subject filter buttons
+            // Render subject filter buttons from all collected subjects
             const subjectFiltersDiv = document.getElementById('subjectFilters');
-            const subjectButtonsHtml = Array.from(uniqueSubjects)
+            const subjectButtonsHtml = Array.from(allUniqueSubjects)
                 .sort()
                 .map(subject => `<button class="filter-button" data-filter-type="subjects" data-filter-value="${subject}">${subject}</button>`)
                 .join('');
