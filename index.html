@@ -49,8 +49,78 @@
             background: white;
             border-radius: 12px;
             padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .filters-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
             margin-bottom: 40px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .filter-section {
+            margin-bottom: 16px;
+        }
+
+        .filter-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-label {
+            font-size: 0.95em;
+            font-weight: 600;
+            color: #1a1a1a;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-button {
+            padding: 8px 14px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-button:hover {
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+
+        .filter-button.active {
+            background: #0066cc;
+            border-color: #0066cc;
+            color: white;
+        }
+
+        .clear-filters {
+            padding: 8px 14px;
+            border: 2px solid #ddd;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .clear-filters:hover {
+            background: #e0e0e0;
+            color: #333;
         }
 
         .ais-SearchBox {
@@ -433,7 +503,7 @@
 </head>
 <body>
     <div class="container">
-        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: #999; font-family: monospace;">v1.5</div>
+        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: #999; font-family: monospace;">v1.6</div>
         <div class="header">
             <h1>Find Your Educator</h1>
             <p>Search our directory of experienced tutors and educators</p>
@@ -441,6 +511,27 @@
 
         <div class="search-container">
             <div id="searchbox"></div>
+        </div>
+
+        <div class="filters-container">
+            <div class="filter-section">
+                <span class="filter-label">Grade Levels</span>
+                <div class="filter-buttons">
+                    <button class="filter-button" data-filter-type="grades" data-filter-value="K-2">K-2</button>
+                    <button class="filter-button" data-filter-type="grades" data-filter-value="3-5">3-5</button>
+                    <button class="filter-button" data-filter-type="grades" data-filter-value="6-8">6-8</button>
+                    <button class="filter-button" data-filter-type="grades" data-filter-value="9-12">9-12</button>
+                </div>
+            </div>
+            <div class="filter-section">
+                <span class="filter-label">Subjects</span>
+                <div class="filter-buttons" id="subjectFilters">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+            <div style="margin-top: 16px;">
+                <button class="clear-filters" id="clearFilters">Clear All Filters</button>
+            </div>
         </div>
 
         <div class="results-container">
@@ -476,6 +567,12 @@
     <script>
         const searchClient = algoliasearch('V4Z6530MZ3', '764e5cea43bb0f0373d65fd3a9edcfa1');
 
+        // Track active filters
+        let activeFilters = {
+            grades: [],
+            subjects: []
+        };
+
         const search = instantsearch({
             indexName: 'educators_directory',
             searchClient,
@@ -496,6 +593,57 @@
             if (e.target === modal) {
                 modal.classList.remove('active');
             }
+        });
+
+        // Filter functionality
+        function applyFilters() {
+            let query = document.querySelector('.ais-SearchBox-input').value;
+            let filterQueries = [];
+
+            if (activeFilters.grades.length > 0) {
+                let gradeFilter = activeFilters.grades.map(g => `grades:"${g}"`).join(' OR ');
+                filterQueries.push(`(${gradeFilter})`);
+            }
+
+            if (activeFilters.subjects.length > 0) {
+                let subjectFilter = activeFilters.subjects.map(s => `primary_subjects:"${s}" OR other_subjects:"${s}"`).join(' OR ');
+                filterQueries.push(`(${subjectFilter})`);
+            }
+
+            const fullQuery = [query, ...filterQueries].filter(Boolean).join(' ');
+            document.querySelector('.ais-SearchBox-input').value = fullQuery;
+            search.helper.setQuery(fullQuery).search();
+        }
+
+        // Add filter button listeners
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('filter-button')) {
+                const filterType = e.target.dataset.filterType;
+                const filterValue = e.target.dataset.filterValue;
+
+                if (!activeFilters[filterType]) {
+                    activeFilters[filterType] = [];
+                }
+
+                const index = activeFilters[filterType].indexOf(filterValue);
+                if (index > -1) {
+                    activeFilters[filterType].splice(index, 1);
+                    e.target.classList.remove('active');
+                } else {
+                    activeFilters[filterType].push(filterValue);
+                    e.target.classList.add('active');
+                }
+
+                applyFilters();
+            }
+        });
+
+        // Clear filters
+        document.getElementById('clearFilters').addEventListener('click', () => {
+            activeFilters = { grades: [], subjects: [] };
+            document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.ais-SearchBox-input').value = '';
+            search.helper.setQuery('').search();
         });
 
         // Event delegation for card clicks
@@ -648,6 +796,32 @@
         // Reset hits array when search is performed
         search.on('results', () => {
             allHits = [];
+            
+            // Generate unique subjects for filter buttons
+            const uniqueSubjects = new Set();
+            search.results.hits.forEach(hit => {
+                if (hit.primary_subjects) {
+                    uniqueSubjects.add(hit.primary_subjects);
+                }
+                if (hit.other_subjects) {
+                    uniqueSubjects.add(hit.other_subjects);
+                }
+            });
+
+            // Render subject filter buttons
+            const subjectFiltersDiv = document.getElementById('subjectFilters');
+            const subjectButtonsHtml = Array.from(uniqueSubjects)
+                .sort()
+                .map(subject => `<button class="filter-button" data-filter-type="subjects" data-filter-value="${subject}">${subject}</button>`)
+                .join('');
+            subjectFiltersDiv.innerHTML = subjectButtonsHtml;
+
+            // Restore active state on newly rendered buttons
+            Object.keys(activeFilters).forEach(filterType => {
+                activeFilters[filterType].forEach(filterValue => {
+                    document.querySelector(`[data-filter-type="${filterType}"][data-filter-value="${filterValue}"]`)?.classList.add('active');
+                });
+            });
         });
 
         search.start();
